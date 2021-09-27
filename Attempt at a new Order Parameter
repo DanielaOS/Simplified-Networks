@@ -1,0 +1,41 @@
+% 'Phases_Save' is a matrix with dimensions [N x tmax/dt_save] so each column has 
+% the N oscillators phase at time t
+OP = zeros(1, size(Phases_Save,2));
+
+for t=1:size(Phases_Save,2)
+    
+    % This cell will store in each element k the phases of te oscillator beloging to cluster k
+    results = cell(1,k);
+    
+    % idx - cluster assignments ; c - centroid location
+    [idx,c] = kmeans(Phases_Save(:,t),k);
+    idx = idx.';
+    c = c.';
+    
+    % Separate the oscillators to their corresponding cluster
+    for cluster=1:k
+        phases = [];
+        for num=1:length(idx)
+            if idx(num)==cluster
+                phases(end+1) = Phases_Save(num,t);
+            end
+        end
+        results{cluster} = phases;
+    end
+    
+    % Rotate the oscillators according to which cluster they belong and turn them 
+    % into phasors
+    expo = []; 
+    for i=0:k-1
+        [small,index] = min(c);  
+        phase = results{index};
+        angle = 2*pi/k;
+        expo = cat(2,expo,exp(1i*(phase+(k-i)*angle)));
+        c(index) = [];
+        results(index) = [];
+    end
+    
+    % Calculate the order parameter
+    OP(t) = abs(mean(expo));
+    
+end
